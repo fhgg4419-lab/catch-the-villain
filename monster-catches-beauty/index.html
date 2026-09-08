@@ -1,0 +1,101 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,user-scalable=no">
+  <meta name="theme-color" content="#172b22">
+  <meta name="description" content="苏式园林追逐点击小游戏：怪兽抓住美女">
+  <title>怪兽抓住美女</title>
+  <style>
+    :root{--ink:#172b22;--jade:#1f6654;--cream:#f7edda;--gold:#d6a84e;--red:#9f302f;--glass:rgba(16,35,29,.87)}
+    *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+    html,body{margin:0;width:100%;height:100%;overflow:hidden;background:#101b17;font-family:"Microsoft YaHei","PingFang SC",system-ui,sans-serif;color:var(--cream)}
+    button{font:inherit;color:inherit;border:0;cursor:pointer;touch-action:manipulation}
+    #app{position:relative;width:100vw;height:100dvh;min-height:460px;overflow:hidden;background:#182b23}
+    .screen{position:absolute;inset:0;display:none}.screen.active{display:flex}
+    .garden-bg{position:absolute;inset:0;background:url('assets/suzhou-garden.webp') center/cover no-repeat;transform:scale(1.02)}
+    .garden-bg::after{content:"";position:absolute;inset:0;background:linear-gradient(90deg,rgba(8,21,17,.74),rgba(9,24,19,.08) 42%,rgba(8,21,17,.36)),linear-gradient(0deg,rgba(8,20,16,.3),transparent 58%)}
+    .home{align-items:center;padding:clamp(20px,5vw,70px)}
+    .home-card{position:relative;z-index:2;width:min(520px,92vw);padding:34px 34px 28px;background:linear-gradient(140deg,rgba(17,48,37,.94),rgba(12,29,24,.91));border:1px solid rgba(238,215,157,.38);box-shadow:0 24px 70px #07110caa;backdrop-filter:blur(8px)}
+    .seal{display:inline-flex;width:43px;height:43px;align-items:center;justify-content:center;background:var(--red);border:2px solid #dfb56b;box-shadow:inset 0 0 0 2px #7c2424;font-family:serif;font-weight:900;transform:rotate(-3deg)}
+    .eyebrow{display:inline-block;margin-left:12px;color:#dbbf82;letter-spacing:.22em;font-size:12px}
+    h1{margin:17px 0 12px;font-family:STKaiti,"KaiTi",serif;font-size:clamp(38px,7vw,68px);line-height:1;color:#fff4d4;text-shadow:0 3px 0 #47271a}
+    .lead{max-width:430px;color:#d4e1d8;line-height:1.8;font-size:15px}.rules{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin:22px 0}.rules div{padding:11px 8px;background:#e8d5a510;border:1px solid #ead59e2d;text-align:center}.rules b{display:block;color:#edca7b;font-size:18px}.rules span{font-size:11px;color:#cad8cf}
+    .primary{width:100%;padding:14px 20px;background:linear-gradient(110deg,#b13c36,#7f2528);border:1px solid #e6b968;font-weight:900;letter-spacing:.1em;box-shadow:0 7px 22px #3d111280}.sub-btn{margin-top:9px;width:100%;padding:10px;background:#e8d6aa12;border:1px solid #d7c28a55;color:#e9dcb9}
+    .game{flex-direction:column}.hud{position:relative;z-index:10;height:82px;flex:0 0 82px;padding:10px 18px;display:grid;grid-template-columns:1fr minmax(160px,260px) 1fr;align-items:center;gap:18px;background:linear-gradient(180deg,#132a22f2,#10251ee8);border-bottom:1px solid #d8bd7b44}
+    .hud-side{font-size:12px;color:#c5d4cb}.hud-side strong{display:block;color:#f5d789;font-size:20px}.hud-side.right{text-align:right}.hud-center{text-align:center}.hud-center b{display:block;font-size:20px;color:#fff1c9}.timer-track{height:7px;margin-top:6px;background:#07130f;border:1px solid #8da18f88}.timer-track i{display:block;width:100%;height:100%;background:linear-gradient(90deg,#e2bd66,#b24338);transition:width .15s linear}
+    .arena{position:relative;flex:1;min-height:0;overflow:hidden;isolation:isolate;cursor:crosshair}.arena::after{content:"";position:absolute;inset:0;z-index:8;pointer-events:none;box-shadow:inset 0 0 90px #0a1710aa;background:linear-gradient(180deg,transparent 65%,#0d1c1738)}
+    .path-glow{position:absolute;left:8%;right:8%;bottom:8%;height:26%;border-radius:50%;background:radial-gradient(ellipse,#eee3ba32,transparent 68%);filter:blur(9px);z-index:1;pointer-events:none}
+    #beauty{position:absolute;left:12%;top:47%;width:clamp(105px,14vw,190px);height:clamp(160px,25vw,290px);transform:translate(-50%,-50%);z-index:4;transition:filter .15s;will-change:left,top,transform;touch-action:manipulation}
+    #beauty .sprite{position:absolute;inset:0;background:url('assets/beauty-running.png') center bottom/contain no-repeat;filter:drop-shadow(0 13px 8px #1320188c);animation:sprint .28s ease-in-out infinite alternate;transform-origin:50% 92%}
+    #beauty.face-left .sprite{transform:scaleX(-1)}
+    #beauty.hidden{z-index:2;pointer-events:none;filter:brightness(.72) saturate(.85)}
+    #beauty.caught{z-index:7;pointer-events:none;width:clamp(120px,16vw,220px);height:clamp(170px,27vw,310px)}
+    #beauty.caught .sprite{background-image:url('assets/beauty-crying.png');animation:cry .7s ease-in-out infinite;transform:none}
+    @keyframes sprint{0%{translate:0 1px;rotate:-1deg;scale:1 .98}100%{translate:0 -7px;rotate:1deg;scale:.99 1.02}}
+    @keyframes cry{0%,100%{translate:0 0;rotate:-.7deg}50%{translate:0 5px;rotate:.7deg}}
+    .cover-layer{position:absolute;inset:0;z-index:5;pointer-events:none;background:url('assets/suzhou-foreground.png') center bottom/100% 100% no-repeat;filter:drop-shadow(0 12px 10px #0a150e66)}
+    .monster-hand{position:absolute;right:-140px;bottom:-70px;width:280px;height:280px;z-index:9;pointer-events:none;opacity:.68;transform:rotate(-28deg);transition:.25s}.monster-hand::before{content:"";position:absolute;inset:40px;background:radial-gradient(circle at 38% 45%,#657344 0 18%,#303c28 50%,transparent 52%);border-radius:48% 44% 38% 55%;box-shadow:-40px -45px 0 -17px #38482f,-8px -69px 0 -18px #415436,27px -57px 0 -18px #37472e,50px -27px 0 -18px #2d3d28;filter:drop-shadow(0 5px 4px #0008)}.monster-hand.grab{right:-72px;bottom:-32px;transform:rotate(-40deg) scale(1.22)}
+    .cover-note{position:absolute;top:16px;left:50%;translate:-50% 0;z-index:9;padding:7px 14px;border-radius:20px;background:#172a23c7;border:1px solid #e2cc9666;font-size:12px;color:#f5e6bc;opacity:0;transition:.18s;pointer-events:none}.cover-note.show{opacity:1;translate:-50% 5px}
+    .toast{position:absolute;left:50%;top:18%;translate:-50% 0;z-index:12;padding:9px 16px;background:#5f201edb;border:1px solid #efc06a;color:#fff0ca;font-weight:800;opacity:0;pointer-events:none;white-space:nowrap}.toast.show{animation:toast .8s ease-out}@keyframes toast{15%{opacity:1;translate:-50% -6px}70%{opacity:1}100%{opacity:0;translate:-50% -25px}}
+    .hit-ring{position:absolute;width:110px;height:110px;border:6px solid #f8e49d;border-radius:50%;z-index:7;pointer-events:none;translate:-50% -50%;animation:ring .55s ease-out forwards}@keyframes ring{0%{scale:.2;opacity:1}100%{scale:2.4;opacity:0}}
+    .result{align-items:center;justify-content:center;background:#0b1813d4;backdrop-filter:blur(8px);z-index:20}.result-card{width:min(490px,90vw);padding:30px;text-align:center;background:linear-gradient(145deg,#1b4938,#10271f);border:1px solid #e3c47777;box-shadow:0 25px 80px #020805}.result-card .result-art{height:170px;background:url('assets/beauty-crying.png') center/contain no-repeat}.result-card h2{margin:8px 0;color:#ffe5a4;font-family:STKaiti,KaiTi,serif;font-size:34px}.result-card p{color:#d3dfd6;line-height:1.7}.result-actions{display:flex;gap:9px;margin-top:20px}.result-actions button{flex:1;padding:12px;background:#245844;border:1px solid #cdb17066}.result-actions .next{background:#9b302f;border-color:#ebc26e;font-weight:800}
+    @media(max-width:760px){.home{justify-content:center}.home-card{padding:22px}.rules{margin:14px 0}.hud{height:66px;flex-basis:66px;padding:7px 9px;grid-template-columns:1fr 130px 1fr;gap:7px}.hud-side strong{font-size:16px}.hud-center b{font-size:17px}.monster-hand{width:220px;height:220px}.cover-note{top:8px}}
+    @media(max-height:560px){#app{min-height:0}.home-card{padding:16px 22px}h1{font-size:37px;margin:10px 0}.lead{font-size:12px;line-height:1.5}.rules{margin:10px 0}.hud{height:58px;flex-basis:58px}.hud-side strong{font-size:14px}.hud-center b{font-size:15px}.timer-track{margin-top:3px}#beauty{width:110px;height:175px}.cover-note{display:none}.result-card{padding:16px}.result-card .result-art{height:110px}.result-card h2{font-size:26px;margin:4px}.result-card p{margin:5px}}
+  </style>
+</head>
+<body>
+<main id="app">
+  <section id="home" class="screen home active">
+    <div class="garden-bg"></div>
+    <article class="home-card">
+      <span class="seal">捕</span><span class="eyebrow">苏园追影 · 点击小游戏</span>
+      <h1>怪兽抓住美女</h1>
+      <p class="lead">她正在苏式园林中四处躲藏。看准她离开假山与树木的瞬间，点击屏幕将她抓住！越往后，她跑得越快。</p>
+      <div class="rules"><div><b>10</b><span>逐渐加速关卡</span></div><div><b>60秒</b><span>每关限时</span></div><div><b>3次</b><span>允许点空</span></div></div>
+      <button id="startBtn" class="primary">进入园林开始追捕</button>
+      <button id="shareBtn" class="sub-btn">分享给微信好友试玩</button>
+    </article>
+  </section>
+
+  <section id="game" class="screen game">
+    <header class="hud">
+      <div class="hud-side"><span>当前关卡</span><strong id="levelText">第 1 / 10 关</strong></div>
+      <div class="hud-center"><b id="statusText">寻找她的踪迹</b><div class="timer-track"><i id="timerBar"></i></div></div>
+      <div class="hud-side right"><span>剩余机会</span><strong id="livesText">♥ ♥ ♥</strong></div>
+    </header>
+    <div id="arena" class="arena">
+      <div class="garden-bg"></div><i class="path-glow"></i>
+      <div id="beauty" aria-label="奔跑的成年女性" role="button"><i class="sprite"></i></div>
+      <div class="cover-layer"></div><div id="monsterHand" class="monster-hand"></div>
+      <div id="coverNote" class="cover-note">她躲进了掩体，暂时无法抓取</div><div id="toast" class="toast"></div>
+    </div>
+  </section>
+
+  <section id="result" class="screen result">
+    <article class="result-card"><div class="result-art"></div><h2 id="resultTitle">抓到了！</h2><p id="resultText"></p><div class="result-actions"><button id="homeBtn">返回首页</button><button id="nextBtn" class="next">进入下一关</button></div></article>
+  </section>
+</main>
+<script>
+  const $=s=>document.querySelector(s);
+  const screens=['home','game','result'];
+  const coverZones=[[2,27],[36,63],[70,96]];
+  const levelNames=['初入拙政园','竹影迷踪','湖石藏身','曲廊追逐','松风疾行','月门惊鸿','荷塘飞步','亭台幻影','园林急追','终局捕获'];
+  let level=1,lives=3,timeLeft=60,running=false,caught=false,hidden=false,lastTime=0,targetX=82,targetY=54,x=12,y=58,speed=19,raf=0,timer=0,lastDir=1;
+  function show(id){screens.forEach(n=>$('#'+n).classList.toggle('active',n===id))}
+  function toast(text){const el=$('#toast');el.textContent=text;el.classList.remove('show');void el.offsetWidth;el.classList.add('show')}
+  function setTarget(){let nx=5+Math.random()*90;while(Math.abs(nx-x)<18)nx=5+Math.random()*90;targetX=nx;targetY=43+Math.random()*30;lastDir=Math.sign(targetX-x)||lastDir;$('#beauty').classList.toggle('face-left',lastDir<0)}
+  function isCovered(px){return coverZones.some(([a,b])=>px>=a&&px<=b)}
+  function updateCover(){const next=isCovered(x);if(next!==hidden){hidden=next;$('#beauty').classList.toggle('hidden',hidden);$('#coverNote').classList.toggle('show',hidden);$('#statusText').textContent=hidden?'她藏在掩体后面':'趁现在，点击抓住她！'}}
+  function place(){const b=$('#beauty');b.style.left=x+'%';b.style.top=y+'%';updateCover()}
+  function frame(t){if(!running)return;if(!lastTime)lastTime=t;const dt=Math.min(.04,(t-lastTime)/1000);lastTime=t;const dx=targetX-x,dy=targetY-y,dist=Math.hypot(dx,dy);if(dist<1.5)setTarget();else{x+=dx/dist*speed*dt;y+=dy/dist*speed*.62*dt;place()}raf=requestAnimationFrame(frame)}
+  function startLevel(){cancelAnimationFrame(raf);clearInterval(timer);show('game');lives=3;timeLeft=60;running=true;caught=false;hidden=false;lastTime=0;speed=18+(level-1)*4.1;x=level%2?8:90;y=50+Math.random()*18;$('#beauty').className='';$('#monsterHand').classList.remove('grab');$('#levelText').textContent=`第 ${level} / 10 关`;$('#statusText').textContent=levelNames[level-1];$('#livesText').textContent='♥ ♥ ♥';$('#timerBar').style.width='100%';setTarget();place();setTimeout(()=>{if(running)$('#statusText').textContent=hidden?'她藏在掩体后面':'趁现在，点击抓住她！'},850);raf=requestAnimationFrame(frame);timer=setInterval(()=>{if(!running)return;timeLeft-=.1;$('#timerBar').style.width=Math.max(0,timeLeft/60*100)+'%';if(timeLeft<=0)lose('时间到了，她逃出了园林！')},100)}
+  function miss(){if(!running)return;lives--;$('#livesText').textContent=['','♥','♥ ♥','♥ ♥ ♥'][Math.max(0,lives)];toast(hidden?'她躲在掩体后，抓不到！':'点空了，再看准一点！');if(navigator.vibrate)navigator.vibrate(35);if(lives<=0)lose('连续三次没有抓中，她趁机逃走了。')}
+  function capture(ev){ev.stopPropagation();if(!running||hidden)return;running=false;caught=true;clearInterval(timer);cancelAnimationFrame(raf);$('#beauty').classList.add('caught');$('#monsterHand').classList.add('grab');const ring=document.createElement('i');ring.className='hit-ring';ring.style.left=x+'%';ring.style.top=y+'%';$('#arena').append(ring);setTimeout(()=>ring.remove(),650);if(navigator.vibrate)navigator.vibrate([55,35,90]);$('#statusText').textContent='抓到了！';setTimeout(()=>finish(true),1300)}
+  function finish(){show('result');$('#resultTitle').textContent=level===10?'十关全部完成！':'抓到了！';$('#resultText').textContent=level===10?'怪兽成功完成十次园林追捕，美女跪地大哭。你已经通关！':`第 ${level} 关成功，她被抓住后跪地大哭。下一关移动速度将提升。`;$('#nextBtn').textContent=level===10?'重新开始':'进入下一关';$('#nextBtn').onclick=()=>{level=level===10?1:level+1;startLevel()}}
+  function lose(text){if(!running)return;running=false;clearInterval(timer);cancelAnimationFrame(raf);show('result');$('#resultTitle').textContent='追捕失败';$('#resultText').textContent=text;$('#nextBtn').textContent='重新挑战';$('#nextBtn').onclick=startLevel}
+  async function share(){const data={title:'怪兽抓住美女',text:'来苏式园林里挑战10关追捕小游戏！',url:location.href};try{if(navigator.share)await navigator.share(data);else{await navigator.clipboard.writeText(location.href);alert('链接已复制，可以粘贴到微信发给好友')}}catch{}}
+  $('#startBtn').onclick=()=>{level=1;startLevel()};$('#shareBtn').onclick=share;$('#homeBtn').onclick=()=>{running=false;clearInterval(timer);cancelAnimationFrame(raf);show('home')};$('#beauty').onclick=capture;$('#arena').onclick=miss;
+</script>
+</body>
+</html>
